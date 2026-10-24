@@ -10,6 +10,12 @@ import {
   transformLayout,
   normalizedToMeters,
   computeStats,
+  operatingPoint,
+  pumpHead,
+  systemFlowLph,
+  systemLossM,
+  calibrateFriction,
+  M_PER_BAR,
   type Project,
   type RadialProfile,
 } from './index';
@@ -99,8 +105,9 @@ describe('simulación', () => {
     expect(fr).toBeCloseTo(1, 6);
   });
 
-  it('el escenario 2 sólo difiere en el caudal de E', () => {
+  it('con presión fija, el escenario 2 sólo difiere en el caudal de E', () => {
     const p = defaultProject();
+    p.pump.enabled = false;
     const r1 = simulate(p, p.scenarios[0], { cellM: 0.25 });
     const r2 = simulate(p, p.scenarios[1], { cellM: 0.25 });
     const e1 = r1.effective.find((e) => e.id === 'E')!;
@@ -148,5 +155,47 @@ describe('indicadores', () => {
     expect(s.dulq).toBeCloseTo(0.4, 9);
     expect(s.pctBelow80).toBeCloseTo(0.25, 9); // sólo 2 < 4
     expect(s.pctAbove120).toBeCloseTo(0.25, 9); // sólo 8 > 6
+  });
+});
+
+describe('bomba', () => {
+  it('curva parabólica entre los máximos de placa', () => {
+    const p = defaultProject();
+    expect(pumpHead(p.pump, 0)).toBe(28);
+    expect(pumpHead(p.pump, 5700)).toBeCloseTo(0, 9);
+    expect(pumpHead(p.pump, 2850)).toBeCloseTo(21, 9);
+  });
+
+  it('el punto de funcionamiento cumple H_bomba(Q) = pérdidas + P', () => {
+    const p = defaultProject();
+    p.pump.staticHeadM.value = 2;
+    p.pump.frictionM.value = 4;
+    for (const sc of p.scenarios) {
+      const op = operatingPoint(p, sc);
+      expect(op.feasible).toBe(true);
+      const q = systemFlowLph(p, sc, op.pressureBar);
+      expect(pumpHead(p.pump, q)).toBeCloseTo(systemLossM(p.pump, q) + op.pressureBar * M_PER_BAR, 4);
+    }
+  });
+
+  it('más caudal en E baja la presión de todos', () => {
+    const p = defaultProject();
+    const p1 = operatingPoint(p, p.scenarios[0]);
+    const p2 = operatingPoint(p, p.scenarios[1]);
+    expect(p2.flowLph).toBeGreaterThan(p1.flowLph);
+    expect(p2.pressureBar).toBeLessThan(p1.pressureBar);
+  });
+
+  it('calibrar con una presión medida reproduce esa presión', () => {
+    const p = defaultProject();
+    const f = calibrateFriction(p, p.scenarios[0], 2.0)!;
+    expect(f).toBeGreaterThan(0);
+    p.pump.frictionM = { value: f, source: 'medido' };
+    expect(operatingPoint(p, p.scenarios[0]).pressureBar).toBeCloseTo(2.0, 4);
+  });
+
+  it('una medición imposible para la curva no se calibra', () => {
+    const p = defaultProject();
+    expect(calibrateFriction(p, p.scenarios[0], 2.9)).toBeNull();
   });
 });

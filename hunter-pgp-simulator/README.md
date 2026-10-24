@@ -36,6 +36,7 @@ src/model/          modelo hidráulico, sin dependencias de la interfaz
   simulate.ts       cuadrícula de cálculo, precipitación local, indicadores, balance de agua
   compare.ts        diferencias entre escenarios y análisis de sensibilidad
   readiness.ts      lista de datos pendientes y fiabilidad
+  pump.ts           curva de la bomba, punto de funcionamiento y calibración
   defaults.ts       datos de ejemplo editables
   model.test.ts     pruebas (conservación del volumen, CU/DUlq, tablas, geometría)
 src/ui/             interfaz React (plano SVG + mapa de calor en canvas, editores, tablas)
@@ -122,6 +123,26 @@ proporcional a √P (ley de orificio) a partir de la fila más cercana y radio
 constante; el resultado se marca como estimación. Los valores medidos introducidos
 por el usuario sustituyen a la tabla.
 
+### Presión de trabajo con la bomba
+
+Los cuatro aspersores se alimentan juntos con una bomba (por defecto: Pektra 1 HP,
+5700 l/h de caudal máximo y 28 m de altura máxima, datos de placa). Si la bomba está
+activa, la presión de cada escenario se calcula como punto de funcionamiento:
+
+    H_bomba(Q) = desnivel + pérdidas · (Q / Q_ref)² + P · 10,197
+    Q = Σ caudal de cada boquilla a la presión P (tablas o valores medidos)
+
+y se resuelve por bisección. Con sólo los dos máximos de placa la curva se supone
+parabólica, H = Hmáx · (1 − (Q/Qmáx)²), forma típica de una bomba centrífuga pero
+**estimada**; si la ficha de la bomba trae la curva, se pueden introducir sus puntos.
+Desnivel y pérdidas son desconocidos (0 m por defecto), así que la presión calculada
+es un **máximo**. Lo más simple es medir la presión con los cuatro en marcha y usar
+**Calibrar**: el modelo ajusta las pérdidas para reproducir esa medición y recalcula
+el otro escenario con la curva.
+
+Así se incluye un efecto que la presión fija ignora: al poner la 2.0 en E sube el
+caudal total, baja la presión y los demás aspersores pierden algo de caudal y radio.
+
 ### Indicadores (sobre las celdas de césped; la construcción queda excluida)
 
 | Indicador | Fórmula |
@@ -153,9 +174,9 @@ conclusión depende de datos que hay que medir. Diferencias de DUlq menores de
 - Velocidad de giro uniforme en todo el arco (en la realidad hay algo más de agua en
   los extremos de giro).
 - Sin viento, evaporación ni deriva; terreno plano.
-- La presión no cambia al cambiar la boquilla de E. Una boquilla de más caudal puede
-  reducir la presión de los cuatro aspersores si la acometida está al límite: sólo se
-  sabe midiendo.
+- Con la bomba activa, la misma presión en los cuatro aspersores (no se modelan las
+  diferencias de pérdida entre ramales); con la bomba desactivada, la presión no
+  cambia al cambiar la boquilla de E.
 - El tornillo reductor de radio no se modela; si se ha usado, introducir el radio
   medido (y, si es posible, el caudal medido).
 - El agua que cae fuera del césped se considera perdida.
@@ -184,9 +205,10 @@ pueden mover y redimensionar en la pestaña *Terreno* o arrastrándolos en el pl
 La sección «Qué falta…» de la aplicación se actualiza con los datos introducidos.
 En orden de importancia:
 
-1. **Presión en cada aspersor con los cuatro funcionando** (manómetro con tubo de
-   pitot en la salida de la boquilla, o en la base del rotor). Es crítica: fija el
-   caudal y el radio de la tabla.
+1. **Presión con los cuatro funcionando** (manómetro a la salida de la bomba, o con
+   tubo de pitot en la boquilla). Es crítica: fija el caudal y el radio de la tabla,
+   y con ella se calibran las pérdidas de la instalación. Si se dispone de la curva
+   completa de la bomba (ficha del fabricante), introducirla también.
 2. **Caudal real** de cada boquilla: con el contador, abriendo un único aspersor si
    es posible, o recogiendo el agua en un recipiente con una manguera sobre la
    boquilla durante un tiempo medido.

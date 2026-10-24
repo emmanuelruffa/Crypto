@@ -5,4 +5,5 @@ export * from './geometry';
 export * from './simulate';
 export * from './compare';
 export * from './readiness';
+export * from './pump';
 export * from './defaults';

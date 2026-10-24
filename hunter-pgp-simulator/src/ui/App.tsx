@@ -19,6 +19,7 @@ import {
 import { NozzleCatalog, PressureEditor, ScenarioEditor, SimSettings, SprinklerEditor, TerrainEditor } from './Editors';
 import { GardenView, sprinklerColor, type ColorMode, type EditMode } from './GardenView';
 import { Legend } from './Legend';
+import { PumpEditor } from './PumpEditor';
 import { Interpretation, ReadinessPanel, ResultsTable, SensitivityPanel, SprinklerTable } from './Results';
 import { Section, fmt, pct } from './common';
 
@@ -29,7 +30,7 @@ function loadProject(): Project {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw) as Project;
-      if (p?.sprinklers?.length && p?.scenarios?.length >= 2 && p?.geometry?.sectors) return p;
+      if (p?.sprinklers?.length && p?.scenarios?.length >= 2 && p?.geometry?.sectors) return { ...defaultProject(), ...p };
     }
   } catch {
     /* almacenamiento no disponible: se usa el ejemplo */
@@ -186,7 +187,8 @@ export function App() {
           <div className="tab-body">
             {tab === 'escenarios' && (
               <>
-                <PressureEditor value={project.pressureBar} onChange={(v) => patch({ pressureBar: v })} />
+                <PumpEditor project={project} onChange={(pump) => patch({ pump })} />
+                {!project.pump.enabled && <PressureEditor value={project.pressureBar} onChange={(v) => patch({ pressureBar: v })} />}
                 <div className="subtabs">
                   {project.scenarios.slice(0, 2).map((s, i) => (
                     <button key={s.id} className={scIdx === i ? 'on' : ''} onClick={() => setScIdx(i)}>
@@ -354,7 +356,7 @@ export function App() {
           </p>
 
           <Section title="Lectura de la comparación">
-            <Interpretation a={r1} b={r2} rows={sens} score={score} focusId={deferred.focusSprinklerId} />
+            <Interpretation a={r1} b={r2} rows={sens} score={score} focusId={deferred.focusSprinklerId} pumpName={deferred.pump.enabled ? deferred.pump.name : undefined} />
           </Section>
           <Section title="Resultados hidráulicos (simulados)">
             <ResultsTable results={results} targetMm={deferred.options.targetDepthMm} cornerR={deferred.options.cornerZoneRadiusM} />

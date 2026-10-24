@@ -777,3 +777,53 @@ ul.readiness li {
 .method p {
   max-width: 90ch;
 }
+
+.pump-editor .results input {
+  width: 100%;
+}
+.pump-chart {
+  margin: 8px 0 0;
+}
+.pump-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.chart-axis {
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+.chart-tick {
+  fill: var(--muted);
+  font-size: 9px;
+}
+.chart-pump {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 2;
+}
+.chart-dot {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.chart-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.line-key {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+.pump-key {
+  background: var(--ink-2);
+}

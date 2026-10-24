@@ -1,7 +1,7 @@
 import { normalizedToMeters, snapToLawn } from './geometry';
 import { NOZZLES } from './nozzles';
 import { defaultProfile } from './profiles';
-import type { Geometry, NormalizedFrame, Project, Scenario, Sprinkler, SprinklerSetting } from './types';
+import type { Geometry, NormalizedFrame, Project, Pump, Scenario, Sprinkler, SprinklerSetting } from './types';
 
 /**
  * Datos de ejemplo editables.
@@ -73,6 +73,29 @@ export const DEFAULT_SCENARIOS: Scenario[] = [
   },
 ];
 
+/**
+ * Bomba indicada por el usuario: Pektra 1 HP, 5700 l/h y 28 m (valores máximos de
+ * placa). Entre esos dos extremos la curva se supone parabólica (estimación).
+ * Desnivel y pérdidas en tuberías: desconocidos, 0 por defecto → la presión
+ * calculada es un límite superior.
+ */
+export function defaultPump(): Pump {
+  return {
+    enabled: true,
+    name: 'Pektra 1 HP',
+    points: [
+      { flowLph: 0, headM: 28 },
+      { flowLph: 5700, headM: 0 },
+    ],
+    pointsSource: 'oficial',
+    pointsNote: 'Caudal y altura máximos de placa indicados por el usuario; la forma de la curva entre ambos es una parábola supuesta.',
+    staticHeadM: { value: 0, source: 'faltante', note: 'Desnivel entre el nivel del agua y los aspersores (incluida la aspiración).' },
+    frictionM: { value: 0, source: 'faltante', note: 'Pérdidas en tuberías, válvulas y filtros.' },
+    frictionRefLph: 2000,
+    calibration: null,
+  };
+}
+
 export function defaultProject(): Project {
   const geometry = structuredClone(DEFAULT_GEOMETRY);
   const frame = { ...DEFAULT_FRAME };
@@ -83,8 +106,9 @@ export function defaultProject(): Project {
     pressureBar: {
       value: 2.76,
       source: 'estimado',
-      note: 'Valor provisional. Medir la presión real con los cuatro aspersores funcionando.',
+      note: 'Valor provisional, sólo se usa si se desactiva la bomba. Medir la presión real con los cuatro aspersores funcionando.',
     },
+    pump: defaultPump(),
     nozzles: structuredClone(NOZZLES),
     nozzleTablesVerified: false,
     scenarios: structuredClone(DEFAULT_SCENARIOS),

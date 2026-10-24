@@ -23,6 +23,7 @@ export function ResultsTable({ results, targetMm, cornerR }: { results: SimResul
   const [a, b] = results;
   const names = a.bySector.map((s) => s.name);
   const rows: Row[] = [
+    { label: 'Presión general de trabajo', get: (r) => r.pressure.value, fmt: (v) => `${fmt(v, 2)} bar`, dfmt: (v) => `${signed(v, 2)} bar`, better: 'none', hint: 'Fija, o calculada con la curva de la bomba si está activa' },
     { label: 'Caudal total del sistema', get: (r) => r.balance.totalFlowLpm, fmt: (v) => `${fmt(v, 2)} l/min (${fmt(v * 0.06, 2)} m³/h)`, dfmt: (v) => `${signed(v, 2)} l/min`, better: 'none' },
     { label: 'Precipitación media en el césped', get: (r) => r.lawn.mean, fmt: (v) => `${fmt(v)} mm/h`, better: 'none' },
     { label: 'Precipitación mínima', get: (r) => r.lawn.min, fmt: (v) => `${fmt(v)} mm/h`, better: 'up' },
@@ -197,8 +198,8 @@ export function SensitivityPanel({ rows, busy }: { rows: SensitivityRow[] | null
         </table>
       </div>
       <p className="note">
-        Cuadrícula de 20 cm. Diferencias de DUlq menores de {fmt(DU_TIE * 100, 0)} puntos se consideran empate. Las filas de presión usan el perfil
-        configurado; las de perfil usan la presión configurada.
+        Cuadrícula de 20 cm: los valores absolutos pueden diferir algo del cálculo principal; lo relevante es la diferencia entre escenarios. Diferencias de DUlq menores de {fmt(DU_TIE * 100, 0)} puntos se consideran empate. Las filas de presión o de pérdidas de la
+        bomba usan el perfil configurado; las de perfil usan la presión configurada.
       </p>
     </div>
   );
@@ -245,12 +246,14 @@ export function Interpretation({
   rows,
   score,
   focusId,
+  pumpName,
 }: {
   a: SimResult;
   b: SimResult;
   rows: SensitivityRow[] | null;
   score: number;
   focusId: string;
+  pumpName?: string;
 }) {
   const d = deltas(a, b);
   const ea = a.effective.find((e) => e.id === focusId);
@@ -276,6 +279,19 @@ export function Interpretation({
             demás aspersores activos.
           </li>
         )}
+        {pumpName && (
+          <li>
+            Con la bomba {pumpName}, al pasar a la 2.0 el caudal total sube y la presión general baja de {fmt(a.pressure.value, 2)} a{' '}
+            {fmt(b.pressure.value, 2)} bar ({signed(b.pressure.value - a.pressure.value, 2)} bar), lo que reduce algo el caudal y el radio de
+            los demás aspersores
+            {(() => {
+              const ra = a.effective.find((e) => e.id !== focusId && e.active);
+              const rb = b.effective.find((e) => e.id === ra?.id);
+              return ra && rb ? ` (p. ej. ${ra.label}: radio ${fmt(ra.radiusM, 2)} → ${fmt(rb.radiusM, 2)} m)` : '';
+            })()}
+            . Ya está incluido en el mapa y en los indicadores.
+          </li>
+        )}
         <li>
           DUlq de todo el césped: {pct(a.lawn.dulq, 1)} → {pct(b.lawn.dulq, 1)} ({duWord}). CU: {pct(a.lawn.cu, 1)} → {pct(b.lawn.cu, 1)}.
         </li>
@@ -295,9 +311,10 @@ export function Interpretation({
           ambos escenarios; cambiar la boquilla de {focusId} sólo las afecta si quedan dentro de su alcance.
         </li>
         <li>
-          Caudal total: {fmt(a.balance.totalFlowLpm, 2)} → {fmt(b.balance.totalFlowLpm, 2)} l/min ({signed(d.totalFlowLpm, 2)}). Un caudal
-          mayor puede bajar la presión de todos los aspersores si la acometida está al límite: ese efecto sólo se conoce midiendo la
-          presión con los cuatro en marcha y no está en el modelo.
+          Caudal total: {fmt(a.balance.totalFlowLpm, 2)} → {fmt(b.balance.totalFlowLpm, 2)} l/min ({signed(d.totalFlowLpm, 2)}).{' '}
+          {pumpName
+            ? 'La caída de presión depende de las pérdidas de la instalación, que aún no se conocen: medir la presión con los cuatro en marcha y calibrar.'
+            : 'Un caudal mayor puede bajar la presión de todos los aspersores si la alimentación está al límite; con la presión fija ese efecto no está en el modelo (activar la bomba en «Escenarios»).'}
         </li>
         {rob && (
           <li>

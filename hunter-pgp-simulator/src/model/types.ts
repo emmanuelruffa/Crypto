@@ -147,6 +147,34 @@ export interface Scenario {
   settings: Record<string, SprinklerSetting>;
 }
 
+// ------------------------------------------------------------------ bomba
+
+export interface PumpCurvePoint {
+  flowLph: number;
+  headM: number;
+}
+
+/**
+ * Bomba que alimenta a los cuatro aspersores a la vez. Si está activa, la presión
+ * de trabajo de cada escenario se calcula como punto de funcionamiento:
+ *   H_bomba(Q) = desnivel + pérdidas(Q) + P/γ,   Q = Σ caudales de las boquillas a P.
+ */
+export interface Pump {
+  enabled: boolean;
+  name: string;
+  /** Curva H(Q). Con dos puntos (0, Hmáx) y (Qmáx, 0) se supone una parábola. */
+  points: PumpCurvePoint[];
+  pointsSource: DataSource;
+  pointsNote?: string;
+  /** Desnivel geométrico total: nivel del agua → aspersores (incluye la aspiración). */
+  staticHeadM: Sourced<number>;
+  /** Pérdida de carga en tuberías y accesorios al caudal de referencia (∝ Q²). */
+  frictionM: Sourced<number>;
+  frictionRefLph: number;
+  /** Presión medida con los cuatro en marcha, usada para calibrar las pérdidas. */
+  calibration: { scenarioId: string; measuredBar: number } | null;
+}
+
 export interface SimOptions {
   /** Tamaño de celda de la cuadrícula de cálculo, en metros. */
   cellM: number;
@@ -162,7 +190,9 @@ export interface Project {
   geometry: Geometry;
   frame: NormalizedFrame;
   sprinklers: Sprinkler[];
+  /** Presión general cuando no se usa la bomba (o con la bomba desactivada). */
   pressureBar: Sourced<number>;
+  pump: Pump;
   nozzles: NozzleSpec[];
   /** El usuario confirma que ha contrastado las tablas con la ficha oficial impresa. */
   nozzleTablesVerified: boolean;

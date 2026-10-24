@@ -66,10 +66,19 @@ export function sensitivity(project: Project, a: Scenario, b: Scenario, cellM = 
   for (const { label, p } of profiles) {
     push(label, 'perfil', simulate(project, a, opts, p), simulate(project, b, opts, p));
   }
-  for (const bar of [2.0, 2.5, 3.0, 3.5]) {
-    // Sólo varía la presión general; las presiones propias de cada aspersor se respetan.
-    const proj: Project = { ...project, pressureBar: { ...project.pressureBar, value: bar } };
-    push(`Presión general ${bar.toFixed(1)} bar (perfil actual)`, 'presión', simulate(proj, a, opts), simulate(proj, b, opts));
+  if (project.pump.enabled) {
+    // Con bomba, lo desconocido son las pérdidas de la instalación: se varían y la
+    // presión de cada escenario se recalcula con la curva de la bomba.
+    for (const m of [0, 3, 6, 10]) {
+      const proj: Project = { ...project, pump: { ...project.pump, frictionM: { value: m, source: 'estimado' } } };
+      push(`Bomba con ${m} m de pérdidas a ${project.pump.frictionRefLph} l/h (perfil actual)`, 'presión', simulate(proj, a, opts), simulate(proj, b, opts));
+    }
+  } else {
+    for (const bar of [2.0, 2.5, 3.0, 3.5]) {
+      // Sólo varía la presión general; las presiones propias de cada aspersor se respetan.
+      const proj: Project = { ...project, pressureBar: { ...project.pressureBar, value: bar } };
+      push(`Presión general ${bar.toFixed(1)} bar (perfil actual)`, 'presión', simulate(proj, a, opts), simulate(proj, b, opts));
+    }
   }
   return rows;
 }

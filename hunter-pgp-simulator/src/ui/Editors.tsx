@@ -7,6 +7,7 @@ import {
   lookupNozzle,
   metersToNormalized,
   resolveSprinkler,
+  scenarioPressure,
   type DataSource,
   type Geometry,
   type NormalizedFrame,
@@ -404,7 +405,8 @@ export function NozzleCatalog({ project, onVerified }: { project: Project; onVer
       {project.nozzles
         .filter((n) => used.has(n.id))
         .map((n) => {
-          const now = lookupNozzle(n, project.pressureBar.value);
+          const pBar = scenarioPressure(project, project.scenarios[0]).value;
+          const now = lookupNozzle(n, pBar);
           return (
             <div key={n.id} className="card">
               <div className="card-head">
@@ -434,7 +436,7 @@ export function NozzleCatalog({ project, onVerified }: { project: Project; onVer
               </div>
               {n.table.length > 0 && (
                 <div className="muted">
-                  A {fmt(project.pressureBar.value, 2)} bar: {fmt(now.flowLpm, 2)} l/min, {fmt(now.radiusM, 2)} m ({now.status === 'tabla' ? 'interpolado' : 'extrapolado'})
+                  A {fmt(pBar, 2)} bar (presión del escenario 1): {fmt(now.flowLpm, 2)} l/min, {fmt(now.radiusM, 2)} m ({now.status === 'tabla' ? 'interpolado' : 'extrapolado'})
                 </div>
               )}
               <div className="muted small">Fuente: {n.sourceRef}</div>

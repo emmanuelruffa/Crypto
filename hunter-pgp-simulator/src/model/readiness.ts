@@ -1,4 +1,5 @@
 import { findNozzle, lookupNozzle } from './nozzles';
+import { operatingPoint, scenarioPressure } from './pump';
 import type { Project, Scenario } from './types';
 
 export type CheckStatus = 'ok' | 'parcial' | 'falta';
@@ -25,17 +26,47 @@ export function readiness(project: Project, scenarios: Scenario[]): ReadinessIte
   const used = (s: Scenario, id: string) => s.settings[id]?.active;
 
   // 1. Presión
-  const pressMeasured = sp.filter((s) => (s.pressureBar ?? project.pressureBar).source === 'medido').length;
+  const general = scenarios.length ? scenarioPressure(project, scenarios[0]) : project.pressureBar;
+  const pressMeasured = sp.filter((s) => (s.pressureBar ?? general).source === 'medido').length;
   items.push({
     id: 'presion',
     label: 'Presión real en cada aspersor con los cuatro funcionando',
     status: pressMeasured === sp.length ? 'ok' : pressMeasured > 0 ? 'parcial' : 'falta',
     detail:
-      pressMeasured === sp.length
-        ? 'Medida en todos los aspersores.'
-        : `Medida en ${pressMeasured}/${sp.length}. Medir con manómetro en la toma de pitot de la boquilla o en la base del rotor, con la zona completa en marcha. Determina caudal y radio de la tabla.`,
+      (pressMeasured === sp.length
+        ? 'Medida.'
+        : `Medida en ${pressMeasured}/${sp.length}. Medir con manómetro en la toma de pitot de la boquilla, en la base del rotor o a la salida de la bomba, con los cuatro en marcha. Determina caudal y radio de la tabla.`) +
+      (project.pump.enabled ? ' Con la bomba activa, una medición a la salida de la bomba sirve para calibrar las pérdidas de la instalación.' : ''),
     weight: 3,
   });
+
+  // 1b. Bomba
+  if (project.pump.enabled) {
+    const pump = project.pump;
+    const parabolic = pump.points.length === 2;
+    items.push({
+      id: 'bomba-curva',
+      label: `Curva de la bomba (${pump.name})`,
+      status: parabolic ? 'parcial' : pump.pointsSource === 'faltante' ? 'falta' : 'ok',
+      detail: parabolic
+        ? 'Sólo se conocen los máximos (caudal a altura 0 y altura a caudal 0); la forma intermedia es una parábola supuesta. Copiar de la ficha de la bomba 3–5 puntos (caudal, altura) de su curva.'
+        : 'Curva introducida por puntos.',
+      weight: 2,
+    });
+    const lossKnown = pump.calibration !== null || (pump.staticHeadM.source === 'medido' && pump.frictionM.source !== 'faltante');
+    const infeasible = scenarios.filter((s) => !operatingPoint(project, s).feasible).map((s) => s.name);
+    items.push({
+      id: 'bomba-perdidas',
+      label: 'Desnivel y pérdidas de carga de la instalación',
+      status: infeasible.length ? 'falta' : lossKnown ? 'ok' : 'falta',
+      detail:
+        (infeasible.length ? `La bomba no alcanza a dar presión en: ${infeasible.join(', ')}. ` : '') +
+        (lossKnown
+          ? 'Calibradas o medidas.'
+          : 'Desconocidos (0 m por defecto): la presión calculada es un máximo. La forma más simple de fijarlos es medir la presión a la salida de la bomba con los cuatro en marcha y usar «Calibrar».'),
+      weight: 3,
+    });
+  }
 
   // 2. Rango de tabla
   const outOfRange: string[] = [];
@@ -45,7 +76,7 @@ export function readiness(project: Project, scenarios: Scenario[]): ReadinessIte
       if (!set?.active) continue;
       const n = findNozzle(project.nozzles, set.nozzleId);
       if (!n) continue;
-      const st = lookupNozzle(n, (s.pressureBar ?? project.pressureBar).value).status;
+      const st = lookupNozzle(n, (s.pressureBar ?? scenarioPressure(project, sc)).value).status;
       if (st !== 'tabla' && !(set.flowOverride && set.radiusOverride)) outOfRange.push(`${s.label} (${sc.name})`);
     }
   }

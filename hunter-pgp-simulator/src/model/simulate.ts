@@ -1,7 +1,8 @@
 import { boundsOf, inArc, inRect, isLawn, isObstacle, segmentHitsRect } from './geometry';
 import { findNozzle, lookupNozzle } from './nozzles';
 import { profileMoment, profileValue } from './profiles';
-import type { DataSource, Geometry, NozzleLookup, Project, RadialProfile, Rect, Scenario, SimOptions, Sprinkler } from './types';
+import { scenarioPressure } from './pump';
+import type { DataSource, Geometry, NozzleLookup, Project, RadialProfile, Rect, Scenario, SimOptions, Sourced, Sprinkler } from './types';
 
 // ------------------------------------------------ parámetros efectivos
 
@@ -46,7 +47,7 @@ function tableDerivedSource(status: NozzleLookup['status'], pressureSource: Data
 export function resolveSprinkler(project: Project, s: Sprinkler, scenario: Scenario): EffectiveSprinkler {
   const set = scenario.settings[s.id];
   const nozzle = findNozzle(project.nozzles, set?.nozzleId ?? '');
-  const pressure = s.pressureBar ?? project.pressureBar;
+  const pressure = s.pressureBar ?? scenarioPressure(project, scenario);
   const look: NozzleLookup = nozzle ? lookupNozzle(nozzle, pressure.value) : { radiusM: 0, flowLpm: 0, status: 'sin-datos' };
   const derived = tableDerivedSource(look.status, pressure.source);
 
@@ -142,6 +143,8 @@ export interface WaterBalance {
 
 export interface SimResult {
   scenarioId: string;
+  /** Presión general del escenario (fija o calculada con la bomba). */
+  pressure: Sourced<number>;
   effective: EffectiveSprinkler[];
   grid: SimGrid;
   lawn: Stats;
@@ -155,11 +158,19 @@ export interface SimResult {
   volumePerCycleL: number;
 }
 
-function simDomain(g: Geometry, eff: EffectiveSprinkler[]): Rect {
-  const rects: Rect[] = [...g.sectors, ...g.obstacles];
+/**
+ * Dominio de cálculo: césped + construcción + círculos de alcance. La cuadrícula se
+ * ancla a la esquina del césped para que las celdas de césped sean las mismas en todos
+ * los escenarios (si no, comparar escenarios con radios distintos añade ruido).
+ */
+function simDomain(g: Geometry, eff: EffectiveSprinkler[], cell: number): Rect {
+  const base = boundsOf([...g.sectors, ...g.obstacles]);
+  const rects: Rect[] = [base];
   for (const e of eff) if (e.active) rects.push({ x: e.x - e.radiusM, y: e.y - e.radiusM, w: 2 * e.radiusM, h: 2 * e.radiusM });
   const b = boundsOf(rects);
-  return { x: b.x - 0.5, y: b.y - 0.5, w: b.w + 1, h: b.h + 1 };
+  const x0 = base.x - Math.ceil((base.x - b.x) / cell + 1e-9) * cell;
+  const y0 = base.y - Math.ceil((base.y - b.y) / cell + 1e-9) * cell;
+  return { x: x0, y: y0, w: b.x + b.w - x0, h: b.y + b.h - y0 };
 }
 
 export function computeStats(values: number[], coords?: { x: number; y: number }[], cellArea = 0): Stats {
@@ -225,7 +236,7 @@ export function simulate(project: Project, scenario: Scenario, optsOverride?: Pa
   const active = eff.filter((e) => e.active);
 
   const cell = Math.min(Math.max(opts.cellM, 0.02), 1);
-  const dom = simDomain(g, eff);
+  const dom = simDomain(g, eff, cell);
   const nx = Math.max(1, Math.ceil(dom.w / cell));
   const ny = Math.max(1, Math.ceil(dom.h / cell));
   const precip = new Float32Array(nx * ny);
@@ -295,6 +306,7 @@ export function simulate(project: Project, scenario: Scenario, optsOverride?: Pa
 
   return {
     scenarioId: scenario.id,
+    pressure: scenarioPressure(project, scenario),
     effective: eff,
     grid,
     lawn,
