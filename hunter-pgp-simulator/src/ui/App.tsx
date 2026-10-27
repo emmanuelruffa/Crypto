@@ -3,6 +3,7 @@ import {
   MASK_LAWN,
   boundsOf,
   defaultProject,
+  mergeNozzleCatalog,
   readiness,
   reliabilityScore,
   sampleGrid,
@@ -30,7 +31,7 @@ function loadProject(): Project {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw) as Project;
-      if (p?.sprinklers?.length && p?.scenarios?.length >= 2 && p?.geometry?.sectors) return { ...defaultProject(), ...p };
+      if (p?.sprinklers?.length && p?.scenarios?.length >= 2 && p?.geometry?.sectors) return { ...defaultProject(), ...p, nozzles: mergeNozzleCatalog(p.nozzles) };
     }
   } catch {
     /* almacenamiento no disponible: se usa el ejemplo */
@@ -131,7 +132,7 @@ export function App() {
     try {
       const p = JSON.parse(await f.text()) as Project;
       if (!p?.sprinklers?.length || !p?.scenarios || p.scenarios.length < 2 || !p?.geometry?.sectors) throw new Error('estructura');
-      setProject({ ...defaultProject(), ...p });
+      setProject({ ...defaultProject(), ...p, nozzles: mergeNozzleCatalog(p.nozzles) });
     } catch {
       alert('El archivo no es un proyecto válido del simulador.');
     }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   defaultProject,
   findNozzle,
+  mergeNozzleCatalog,
   lookupNozzle,
   profileMoment,
   resolveSprinkler,
@@ -39,6 +40,19 @@ describe('tablas de boquillas', () => {
       [2.8, 29, 0.64], [3.8, 37, 0.53],
     ];
     for (const [gpm, ft, inh] of rows) expect((96.3 * gpm * 2) / (ft * ft)).toBeCloseTo(inh, 1);
+  });
+
+  it('todas las tablas están ordenadas por presión creciente', () => {
+    for (const n of defaultProject().nozzles) {
+      for (let i = 1; i < n.table.length; i++) expect(n.table[i].pressureBar).toBeGreaterThan(n.table[i - 1].pressureBar);
+    }
+  });
+
+  it('un proyecto guardado recibe las boquillas nuevas y conserva las propias', () => {
+    const own = { ...findNozzle(defaultProject().nozzles, 'custom')!, id: 'mia', label: 'Mía' };
+    const merged = mergeNozzleCatalog([own]);
+    expect(findNozzle(merged, 'bl-3.0')).toBeDefined();
+    expect(findNozzle(merged, 'mia')).toBeDefined();
   });
 
   it('interpola linealmente y marca la extrapolación', () => {

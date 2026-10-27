@@ -77,7 +77,7 @@ export interface NozzleTablePoint {
 export interface NozzleSpec {
   id: string;
   label: string;
-  family: 'gris-angulo-bajo' | 'negra-corto-alcance' | 'personalizada';
+  family: 'gris-angulo-bajo' | 'negra-corto-alcance' | 'azul-estandar' | 'verde-alto-caudal' | 'personalizada';
   color: string;
   /** Puntos de la tabla de rendimiento, ordenados por presión creciente. */
   table: NozzleTablePoint[];

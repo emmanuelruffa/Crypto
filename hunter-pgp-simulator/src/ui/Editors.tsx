@@ -11,6 +11,7 @@ import {
   type DataSource,
   type Geometry,
   type NormalizedFrame,
+  type NozzleSpec,
   type Obstacle,
   type ProfileKind,
   type Project,
@@ -44,6 +45,14 @@ export function PressureEditor({ value, onChange }: { value: Sourced<number>; on
 }
 
 // ----------------------------------------------------- ajustes por escenario
+
+const NOZZLE_GROUPS: [NozzleSpec['family'], string][] = [
+  ['gris-angulo-bajo', 'Grises · ángulo bajo'],
+  ['negra-corto-alcance', 'Negras · corto alcance'],
+  ['azul-estandar', 'Azules · estándar'],
+  ['verde-alto-caudal', 'Verdes · alto caudal'],
+  ['personalizada', 'Otras'],
+];
 
 function OverrideInput({
   label,
@@ -118,11 +127,18 @@ export function ScenarioEditor({
                 <b>Aspersor {s.label}</b>
               </label>
               <select value={st.nozzleId} onChange={(e) => set(s.id, { nozzleId: e.target.value, flowOverride: null, radiusOverride: null })} aria-label={`Boquilla de ${s.label}`}>
-                {project.nozzles.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.label}
-                  </option>
-                ))}
+                {NOZZLE_GROUPS.map(([family, label]) => {
+                  const list = project.nozzles.filter((n) => n.family === family);
+                  return list.length ? (
+                    <optgroup key={family} label={label}>
+                      {list.map((n) => (
+                        <option key={n.id} value={n.id}>
+                          {n.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null;
+                })}
               </select>
             </div>
             {eff.tableStatus === 'extrapolado' && <div className="warn">Presión fuera del rango de la tabla de esta boquilla: valores extrapolados (estimación).</div>}

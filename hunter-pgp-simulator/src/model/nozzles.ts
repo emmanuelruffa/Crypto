@@ -8,6 +8,10 @@ import type { NozzleLookup, NozzleSpec, NozzleTablePoint } from './types';
  *    https://www.hunterirrigation.com/node/3936  (US)  y  /en-metric/node/3936
  *  - PGP Ultra / I-20 Black Short-Radius Nozzle Performance Data
  *    https://www.hunterirrigation.com/node/3941  (US)  y  /en-metric/node/3941
+ *  - PGP Ultra / I-20 Blue Standard Nozzle Performance Data
+ *    https://www.hunterirrigation.com/node/3931  (US)  y  /en-metric/node/50806
+ *  - PGP Ultra / I-20 High-Flow Nozzle Performance Data (verde)
+ *    https://www.hunterirrigation.com/en-metric/node/3951
  *  - Ficha métrica LIT-651: https://www.hunterirrigation.com/sites/default/files/ic_i20_em.pdf
  *
  * IMPORTANTE: los valores se transcribieron a partir de extractos de esas páginas
@@ -39,6 +43,9 @@ function metric(bar: number, m: number, lpm: number): NozzleTablePoint {
 
 const REF_LA = 'Hunter, PGP Ultra / I-20 Grey Low-Angle Nozzle Performance Data (hunterirrigation.com/node/3936)';
 const REF_SR = 'Hunter, PGP Ultra / I-20 Black Short-Radius Nozzle Performance Data (hunterirrigation.com/node/3941)';
+const REF_BLUE = 'Hunter, PGP Ultra / I-20 Blue Standard Nozzle Performance Data (hunterirrigation.com/node/3931 y /en-metric/node/50806)';
+const BLUE_ENDS = 'Sólo se dispone de los extremos (25 y 65 psi); intermedios interpolados linealmente.';
+const BLUE_MIXED = 'Filas de 25 y 65 psi de la tabla US y de 2,5–4,0 bar de la tabla métrica.';
 const TRANSCRIBED = 'Transcrito de la tabla publicada por Hunter; verificar contra la tabla oficial impresa (LIT-651).';
 const METRIC_POINT = 'El punto de 1,7 bar procede de la tabla métrica; el resto de la tabla en unidades US convertida.';
 
@@ -144,6 +151,96 @@ export const NOZZLES: NozzleSpec[] = [
     caveats: [TRANSCRIBED, 'Sólo filas de 2,0 a 3,0 bar disponibles; fuera de ese rango se extrapola.'],
   },
   {
+    id: 'bl-1.5',
+    label: 'Azul 1.5 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 29, 1.2), us(35, 31, 1.4), us(45, 31, 1.5), us(55, 32, 1.8), us(65, 32, 1.9)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED],
+  },
+  {
+    id: 'bl-2.0',
+    label: 'Azul 2.0 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 33, 1.4), us(65, 34, 2.3)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED, BLUE_ENDS],
+  },
+  {
+    id: 'bl-2.5',
+    label: 'Azul 2.5 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 33, 1.7), us(65, 35, 2.9)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED, BLUE_ENDS],
+  },
+  {
+    id: 'bl-3.0',
+    label: 'Azul 3.0 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 35, 2.2), metric(2.5, 11.0, 10.2), metric(3.0, 11.6, 11.4), metric(4.0, 11.9, 13.2), us(65, 39, 3.7)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED, BLUE_MIXED],
+  },
+  {
+    id: 'bl-4.0',
+    label: 'Azul 4.0 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 37, 3.0), metric(2.5, 11.9, 13.6), metric(3.0, 12.2, 15.0), metric(4.0, 12.5, 17.3), us(65, 41, 4.8)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED, BLUE_MIXED],
+  },
+  {
+    id: 'bl-5.0',
+    label: 'Azul 5.0 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 37, 3.7), us(35, 39, 4.5), us(45, 42, 5.0), us(55, 42, 5.7), us(65, 42, 6.2)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED],
+  },
+  {
+    id: 'bl-6.0',
+    label: 'Azul 6.0 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 38, 4.3), us(35, 40, 5.6), us(45, 43, 6.0), us(55, 44, 6.7), us(65, 44, 7.3)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED],
+  },
+  {
+    id: 'bl-8.0',
+    label: 'Azul 8.0 (estándar)',
+    family: 'azul-estandar',
+    color: '#2a78d6',
+    table: [us(25, 37, 6.0), us(35, 41, 7.0), us(45, 44, 8.0), us(55, 46, 9.0), us(65, 46, 9.8)],
+    source: 'oficial',
+    sourceRef: REF_BLUE,
+    caveats: [TRANSCRIBED, 'Gran caudal: con la bomba actual la presión puede caer por debajo del mínimo recomendado (1,7 bar).'],
+  },
+  {
+    id: 'gr-6.0',
+    label: 'Verde 6.0 (alto caudal)',
+    family: 'verde-alto-caudal',
+    color: '#1baf7a',
+    table: [metric(1.7, 9.1, 14.3), metric(2.0, 9.4, 15.6), metric(2.5, 10.1, 17.8), metric(3.0, 10.7, 20.0), metric(3.5, 11.3, 21.9), metric(4.0, 11.6, 23.6), metric(4.5, 11.9, 25.3)],
+    source: 'oficial',
+    sourceRef: 'Hunter, PGP Ultra / I-20 High-Flow Nozzle Performance Data (hunterirrigation.com/en-metric/node/3951)',
+    caveats: [TRANSCRIBED, 'La fuente la nombra también como «6.0 LA»: confirmar en la ficha que es la boquilla verde que se piensa comprar.'],
+  },
+  {
     id: 'custom',
     label: 'Personalizada (sin tabla)',
     family: 'personalizada',
@@ -154,6 +251,17 @@ export const NOZZLES: NozzleSpec[] = [
     caveats: ['Requiere caudal y radio introducidos por el usuario.'],
   },
 ];
+
+/**
+ * Catálogo de un proyecto guardado: las boquillas incorporadas se toman siempre de
+ * la versión actual de NOZZLES (así un proyecto antiguo recibe las nuevas y las
+ * correcciones), y se conservan las que el usuario haya añadido con otro id.
+ */
+export function mergeNozzleCatalog(saved: NozzleSpec[] | undefined): NozzleSpec[] {
+  const builtIn = structuredClone(NOZZLES);
+  const ids = new Set(builtIn.map((n) => n.id));
+  return [...builtIn, ...(saved ?? []).filter((n) => !ids.has(n.id))];
+}
 
 export function findNozzle(nozzles: NozzleSpec[], id: string): NozzleSpec | undefined {
   return nozzles.find((n) => n.id === id);
