@@ -44,7 +44,7 @@ function metric(bar: number, m: number, lpm: number): NozzleTablePoint {
 const REF_LA = 'Hunter, PGP Ultra / I-20 Grey Low-Angle Nozzle Performance Data (hunterirrigation.com/node/3936)';
 const REF_SR = 'Hunter, PGP Ultra / I-20 Black Short-Radius Nozzle Performance Data (hunterirrigation.com/node/3941)';
 const REF_BLUE = 'Hunter, PGP Ultra / I-20 Blue Standard Nozzle Performance Data (hunterirrigation.com/node/3931 y /en-metric/node/50806)';
-const BLUE_ENDS = 'Sólo se dispone de los extremos (25 y 65 psi); intermedios interpolados linealmente.';
+const BLUE_METRIC_ENDS = 'Filas de 1,7 y 2,5 bar de la tabla métrica y de 65 psi de la tabla US; intermedios interpolados linealmente.';
 const BLUE_MIXED = 'Filas de 25 y 65 psi de la tabla US y de 2,5–4,0 bar de la tabla métrica.';
 const TRANSCRIBED = 'Transcrito de la tabla publicada por Hunter; verificar contra la tabla oficial impresa (LIT-651).';
 const METRIC_POINT = 'El punto de 1,7 bar procede de la tabla métrica; el resto de la tabla en unidades US convertida.';
@@ -165,20 +165,20 @@ export const NOZZLES: NozzleSpec[] = [
     label: 'Azul 2.0 (estándar)',
     family: 'azul-estandar',
     color: '#2a78d6',
-    table: [us(25, 33, 1.4), us(65, 34, 2.3)],
+    table: [metric(1.7, 10.1, 5.4), metric(2.5, 10.1, 6.5), us(65, 34, 2.3)],
     source: 'oficial',
     sourceRef: REF_BLUE,
-    caveats: [TRANSCRIBED, BLUE_ENDS],
+    caveats: [TRANSCRIBED, BLUE_METRIC_ENDS],
   },
   {
     id: 'bl-2.5',
     label: 'Azul 2.5 (estándar)',
     family: 'azul-estandar',
     color: '#2a78d6',
-    table: [us(25, 33, 1.7), us(65, 35, 2.9)],
+    table: [metric(1.7, 10.1, 6.6), metric(2.5, 10.7, 8.0), us(65, 35, 2.9)],
     source: 'oficial',
     sourceRef: REF_BLUE,
-    caveats: [TRANSCRIBED, BLUE_ENDS],
+    caveats: [TRANSCRIBED, BLUE_METRIC_ENDS],
   },
   {
     id: 'bl-3.0',

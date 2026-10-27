@@ -84,8 +84,8 @@ El catálogo incluye también las boquillas **azules estándar** (1.5, 2.0, 2.5,
 tabla métrica) y la **verde 6.0** de alto caudal
 (<https://www.hunterirrigation.com/node/3931>,
 <https://www.hunterirrigation.com/en-metric/node/50806>,
-<https://www.hunterirrigation.com/en-metric/node/3951>). Las azules 2.0 y 2.5 sólo
-tienen los extremos de presión. No se encontró la tabla de la azul 7.0. En el
+<https://www.hunterirrigation.com/en-metric/node/3951>). Las azules 2.0 y 2.5 tienen
+filas de 1,7 y 2,5 bar (tabla métrica) y de 65 psi. No se encontró la tabla de la azul 7.0. En el
 selector de cada aspersor las boquillas aparecen agrupadas por color.
 
 **Advertencia:** estas cifras se transcribieron de extractos de las páginas de Hunter;
